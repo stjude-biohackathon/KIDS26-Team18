@@ -40,8 +40,9 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+/lib/
 lib64/
+!src/lib/
 parts/
 sdist/
 var/
@@ -130,11 +131,13 @@ celerybeat.pid
 # Environments
 .env
 .venv
-env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+# Project conda spec lives in env/ (not a virtualenv)
+!env/
+!env/**
 
 # Spyder project settings
 .spyderproject
@@ -154,4 +157,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .myenv/
-requirements.txt
+/requirements.txt
+!env/requirements.txt
+
+# others
+BioHackathon_spatial_omics_notebook_template_plan.md

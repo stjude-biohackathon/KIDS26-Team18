@@ -1,0 +1,64 @@
+# Demo marker panels for BioHackathon synthetic TMA template.
+# Each cell type uses 4 genes; rule-based typing requires >= 3 with count > 1.
+
+marker_panels:
+  Tumor state A:
+    - SPINK1
+    - KLK3
+    - FOLH1
+    - AGR2
+  Tumor state B:
+    - KRT5
+    - KRT14
+    - TP63
+    - KRT17
+  CD8 T cells:
+    - CD8A
+    - CD8B
+    - NKG7
+    - GNLY
+  CD4 T cells:
+    - CD4
+    - IL7R
+    - CCR7
+    - TRAC
+  Macrophages:
+    - CD68
+    - CD163
+    - LYZ
+    - CSF1R
+  Fibroblasts:
+    - COL1A1
+    - DCN
+    - LUM
+    - PDGFRA
+  Endothelial cells:
+    - PECAM1
+    - VWF
+    - KDR
+    - CDH5
+
+prefix_panels: {}
+
+# Maps score_cluster panel names (from marker_panels.yaml ontology) to notebook labels.
+label_map:
+  "Tumor / Prostate cancer": "Tumor state A"
+  "SPINK1+ Tumor": "Tumor state A"
+  "Prostate tumor / malignant luminal": "Tumor state A"
+  "Basal epithelial": "Tumor state B"
+  "T / NK lymphocytes": "CD8 T cells"
+  "Myeloid": "Macrophages"
+  "Stroma / Fibroblast": "Fibroblasts"
+  "Endothelial": "Endothelial cells"
+  "Epithelial / Luminal": "Tumor state A"
+  "Luminal epithelial / secretory": "Tumor state A"
+
+# Reverse map for scanpy cluster annotation on demo panels (direct notebook labels).
+scanpy_panel_map:
+  Tumor state A: Tumor state A
+  Tumor state B: Tumor state B
+  "CD8 T cells": "CD8 T cells"
+  "CD4 T cells": "CD4 T cells"
+  Macrophages: Macrophages
+  Fibroblasts: Fibroblasts
+  "Endothelial cells": "Endothelial cells"
