@@ -6,25 +6,24 @@ This repository is a starting point for a three-day team project. This repositor
 
 ## Project Profile
 
-- **Project name:** [Add a short, descriptive name]
-- **Question, problem, or opportunity:** [What are you exploring?]
-- **Data, inputs, or evidence:** [What will you use, and where does it come from?]
-- **Expected output:** [What will you show, test, explain, or demonstrate?]
-- **Tools and stack:** [Languages, libraries, notebooks, APIs, databases, services, or other tools]
-- **Team lead:** [Name and GitHub handle]
+- **Project name:** Cell Identity in Spatial OMICs Imaging Platforms: Cluster-Based vs Cell-Based Annotation
+- **Question, problem, or opportunity:** Exploring how cluster-based and cell-based annotation approaches relate to and complement each other in imaging-based spatial transcriptomics, and when each provides reliable biological insight
+- **Data, inputs, or evidence:** We will be using public datasets either from GEO DataSets or from the platform companies (e.g., 10x Genomics, Bruker). Each dataset will represent either a platform or an organ type. The primary input will be an AnnData object (.h5ad file). We can use SpatialData objects (.zarr) for data visualization depending upon availability.
+- **Expected output:** The expected output will be a Jupyter notebook with a straightforward analysis demonstrating the relevance of cell-based annotation. All utility functions should be compiled at a higher level so other members of the team can use the core functionalities developed during this biohackathon.
+- **Tools and stack:** Python: Scanpy, AnnData, SpatialData, and scverse tools in general. Previous experience with single-cell and/or spatial transcriptomics analysis is recommended. Experience working with public datasets and repositories, such as GEO DataSets, would be helpful. Familiarity with specific organ types or biological domains (e.g., kidney diseases, cancer biology) would be a plus. Basic GitHub knowledge is also expected. None of these are mandatory.
+- **Team lead:** Maycon Marção [@Mmaycon]
 - **Team members and roles:** [Link to `project-management/team.md`]
-- **Communication:** [Add the agreed channel or contact]
+- **Communication:** Slack (StJude workspace)
 
-Naming the tools and stack early helps the team lead create useful roles and divide work realistically. It is fine to revise this section as the project develops.
 
 ## Vision and Mission
 
-- **Vision:** [Describe the change, insight, or capability you hope this project supports.]
-- **Mission:** [Describe what the team will do during the biohackathon to move toward that vision.]
+- **Vision:** Explore whether cell types can be reliably identified directly from spatial transcript detections and marker genes, without relying on conventional analysis pipelines.
+- **Mission:** Bring people together to test this idea across public datasets, share analytical perspectives, and introduce newcomers to spatial transcriptomics.
 
 ## About
 
-[Add a short explanation of the motivation, background, and why the question or problem matters.]
+Cell type annotation in imaging-based transcriptomics sits at the core of how we interpret biology, yet we still rely on two fundamentally different strategies without fully understanding how they relate to each other. Cluster-based annotation assigns identity at the population level, while cell-based annotation applies explicit gene rules to classify individual cells. Imaging-based technologies make this especially interesting because transcripts are directly detected as spatial spots, allowing gene expression to behave more like a robust binary signal: a transcript is either observed or not. This makes rule-based annotation intuitive and interpretable, but it also raises questions about thresholds, marker specificity, and hidden assumptions. Both approaches are widely used and often treated as interchangeable, despite little evidence that they capture the same biological reality. The goal is not to declare one method better than the other, but to understand how complementary they can be and when each provides the most reliable biological insight.
 
 ## Roadmap and Milestones
 
