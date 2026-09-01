@@ -1,0 +1,34 @@
+---
+title: "get_geo"
+output: html_document
+date: "2026-08-17"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(Seurat)
+library(SeuratDisk)
+```
+
+```{r}
+seurat_object <- readRDS(file = "/media/ResearchHome/plummgrp/home/common/Maggie/GSE250346_Seurat_GSE250346_CORRECTED_SEE_RDS_README_082024.rds")
+
+print(seurat_object)
+```
+
+```{r}
+seurat_object[["RNA3"]] <- as(seurat_object[["RNA"]], Class = "Assay")
+DefaultAssay(seurat_object) <- "RNA3"
+seurat_object[["RNA"]] <- NULL
+seurat_object <- RenameAssays(object = seurat_object, RNA3 = 'RNA')
+```
+
+```{r}
+SaveH5Seurat(seurat_object, filename = "/media/ResearchHome/plummgrp/home/common/Maggie/GSE250346.h5Seurat")
+Convert("/media/ResearchHome/plummgrp/home/common/Maggie/GSE250346.h5Seurat", dest = "h5ad")
+```
+
+

@@ -1,8 +1,0 @@
-cell_type,CD4 T cells,CD8 T cells,Endothelial cells,Fibroblasts,Macrophages,Tumor state A,Tumor state B
-CD4 T cells,83,0,0,0,1,0,1
-CD8 T cells,2,81,0,0,3,0,2
-Endothelial cells,1,4,65,0,1,1,0
-Fibroblasts,0,1,0,123,0,2,2
-Macrophages,1,1,1,2,113,1,0
-Tumor state A,5,2,4,2,4,135,2
-Tumor state B,0,1,0,1,1,2,116
