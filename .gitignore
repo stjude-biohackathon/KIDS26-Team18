@@ -163,4 +163,19 @@ dmypy.json
 # others
 BioHackathon_spatial_omics_notebook_template_plan.md
 outdated/
-raw_data/
+
+# Ignore data under raw_data, but keep scripts/docs
+**/raw_data/*
+# Allow git to traverse subdirectories
+!**/raw_data/**/
+# Re-ignore everything inside those subdirectories
+**/raw_data/**/*
+# Whitelist scripts and small docs at any depth
+!**/raw_data/**/*.py
+!**/raw_data/**/*.sh
+!**/raw_data/**/*.R
+!**/raw_data/**/*.Rmd
+!**/raw_data/**/*.pl
+!**/raw_data/**/*.rb
+!**/raw_data/**/*.ipynb
+!**/raw_data/**/README.md
