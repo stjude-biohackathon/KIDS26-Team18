@@ -21,6 +21,7 @@
 *.h5ad
 *.h5
 *.parquet
+*.zarr
 
 # Python template exclusions
 
