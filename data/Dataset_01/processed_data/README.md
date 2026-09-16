@@ -16,6 +16,8 @@ Source: [GSE250346](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE250346
 
 ## Workflow
 
+Function-level reference for these notebooks (and CosMx equivalents): see [Analysis workflows & key functions](../../README.md#analysis-workflows--key-functions) in `data/README.md`.
+
 1. **`00_load_and_explore.ipynb`** — read SpatialData from `TMA5.zarr`, crop cells by bounding box, merge all `.obs` columns from `outdated/GSE250346_slim.h5ad` on `cell_id`, optionally write `one_sample.h5ad`.
 2. **`subset_tma5_zarr.py`** — build a shareable ~1 GB SpatialData zarr from the full `TMA5.zarr` (dense cell region, all elements):
 

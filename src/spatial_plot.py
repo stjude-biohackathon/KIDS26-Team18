@@ -317,7 +317,11 @@ def build_plot_crop(
     from spatialdata.models import PointsModel
     from spatialdata.transformations import get_transformation
 
-    pdf = filtered.compute()
+    # reset_index(drop=True): boolean masking preserves original (non-monotonic,
+    # duplicate-across-partition) indices, which break dask repartition/reindex on
+    # write and on len(). A clean RangeIndex avoids "cannot reindex on an axis with
+    # duplicate labels".
+    pdf = filtered.compute().reset_index(drop=True)
     transform = get_transformation(sdata[points_key], "global")
     crop.points[points_key] = PointsModel.parse(
         pdf,
