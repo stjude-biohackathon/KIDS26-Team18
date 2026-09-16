@@ -11,6 +11,11 @@ if TYPE_CHECKING:
     from anndata import AnnData
     from spatialdata import SpatialData
 
+# spatialdata_plot auto-switches to datashader above this threshold; datashader
+# misaligns large Xenium transcript overlays (see Dataset_03 DEBUGGING.md).
+DATASHADER_AUTO_THRESHOLD = 10_000
+DEFAULT_POINTS_RENDER_METHOD = "matplotlib"
+
 
 def attach_morphology_mip(
     sdata: SpatialData,
@@ -146,6 +151,38 @@ def _get_xy_scale(sdata: SpatialData, element_key: str) -> float:
     return 1.0
 
 
+def _infer_transcript_feature_col(sdata: SpatialData, points_key: str) -> str:
+    cols = set(sdata[points_key].columns)
+    for candidate in ("feature_name", "target", "gene"):
+        if candidate in cols:
+            return candidate
+    raise ValueError(f"Cannot infer transcript feature column from {sorted(cols)}")
+
+
+def _infer_instance_key(sdata: SpatialData, points_key: str = "transcripts") -> str:
+    """Infer the cell-instance column from table metadata or points columns."""
+    table = sdata.get("table")
+    if table is not None:
+        attrs = table.uns.get("spatialdata_attrs", {})
+        if "instance_key" in attrs:
+            return str(attrs["instance_key"])
+
+    cols = set(sdata[points_key].columns)
+    for candidate in ("cell_id", "cell_uid", "cell_ID"):
+        if candidate in cols:
+            return candidate
+    return "cell_id"
+
+
+def _points_coordinate_map(columns: list[str] | set[str]) -> dict[str, str]:
+    """Build PointsModel coordinate map (x/y required; z optional)."""
+    cols = set(columns)
+    coords = {"x": "x", "y": "y"}
+    if "z" in cols:
+        coords["z"] = "z"
+    return coords
+
+
 def transcript_roi_center(
     sdata: SpatialData,
     gene: str,
@@ -196,6 +233,36 @@ def transcript_roi_center(
     return best_center
 
 
+def cell_density_roi_center(
+    coords: np.ndarray,
+    half: float = 2000,
+    grid: int = 20,
+) -> tuple[float, float]:
+    """Return (cx, cy) maximizing cell count inside a half×2 window.
+
+    Grid-searches the central 70–90% of the x/y extent of ``coords``.
+    """
+    x = coords[:, 0]
+    y = coords[:, 1]
+    x_lo, x_hi = float(np.quantile(x, 0.15)), float(np.quantile(x, 0.85))
+    y_lo, y_hi = float(np.quantile(y, 0.15)), float(np.quantile(y, 0.85))
+    xs = np.linspace(x_lo, x_hi, grid)
+    ys = np.linspace(y_lo, y_hi, grid)
+
+    best_n = -1
+    best_center = (float(np.median(x)), float(np.median(y)))
+    for cx in xs:
+        for cy in ys:
+            n = int(
+                ((x >= cx - half) & (x <= cx + half)
+                 & (y >= cy - half) & (y <= cy + half)).sum()
+            )
+            if n > best_n:
+                best_n = n
+                best_center = (float(cx), float(cy))
+    return best_center
+
+
 def build_plot_crop(
     sdata: SpatialData,
     cx: float,
@@ -205,6 +272,7 @@ def build_plot_crop(
     gene: str | None = None,
     points_key: str = "transcripts",
     transcript_feature_col: str | None = None,
+    instance_key: str | None = None,
     filter_table: bool = False,
 ) -> SpatialData:
     """BBox-crop ``sdata`` and replace points with a proper spatial transcript filter.
@@ -215,6 +283,8 @@ def build_plot_crop(
     """
     if transcript_feature_col is None:
         transcript_feature_col = _infer_transcript_feature_col(sdata, points_key)
+    if instance_key is None:
+        instance_key = _infer_instance_key(sdata, points_key)
 
     crop = sdata.query.bounding_box(
         axes=("x", "y"),
@@ -240,7 +310,22 @@ def build_plot_crop(
     )
     if gene is not None:
         mask = mask & (tx[transcript_feature_col] == gene)
-    crop.points[points_key] = tx[mask]
+    filtered = tx[mask]
+
+    # Boolean filtering leaves sparse dask-expr partitions (npartitions != non-empty
+    # chunks), which breaks spatialdata transform during plotting on large datasets.
+    from spatialdata.models import PointsModel
+    from spatialdata.transformations import get_transformation
+
+    pdf = filtered.compute()
+    transform = get_transformation(sdata[points_key], "global")
+    crop.points[points_key] = PointsModel.parse(
+        pdf,
+        coordinates=_points_coordinate_map(pdf.columns),
+        feature_key=transcript_feature_col,
+        instance_key=instance_key,
+        transformations={"global": transform},
+    )
     return crop
 
 
@@ -291,14 +376,6 @@ def expression_roi_center(
     return cx, cy
 
 
-def _infer_transcript_feature_col(sdata: SpatialData, points_key: str) -> str:
-    cols = set(sdata[points_key].columns)
-    for candidate in ("feature_name", "target", "gene"):
-        if candidate in cols:
-            return candidate
-    raise ValueError(f"Cannot infer transcript feature column from {sorted(cols)}")
-
-
 def plot_gene_seg_transcripts(
     sdata: SpatialData,
     gene: str,
@@ -311,6 +388,7 @@ def plot_gene_seg_transcripts(
     point_size: float = 1.0,
     point_alpha: float = 0.6,
     palette: str = "orange",
+    points_render_method: str = DEFAULT_POINTS_RENDER_METHOD,
 ):
     """Modal-agnostic overlay: gene expression on segmentation + transcript spots.
 
@@ -340,6 +418,7 @@ def plot_gene_seg_transcripts(
             palette=palette,
             size=point_size,
             alpha=point_alpha,
+            method=points_render_method,
         )
         .pl.show(
             coordinate_systems=coordinate_system,

@@ -1,4 +1,9 @@
-name: biohack-spatial
+# Reproduces the cluster `spatialdata` env used for Dataset_02–06 QC notebooks
+# and build_sdata.py scripts (Python 3.12, spatialdata 0.7.2, Zarr v3).
+#
+# Existing install on this machine:
+#   /mnt/scratch1/miniconda3/envs/spatialdata
+name: spatialdata
 channels:
   - conda-forge
 dependencies:
@@ -11,9 +16,16 @@ dependencies:
       - spatialdata-io==0.6.0
       - zarr==3.1.6
       - ome-zarr==0.15.0
+      - ome-types==0.6.3
       - multiscale-spatial-image==2.0.3
       - spatial-image==1.2.3
+      - xarray==2026.4.0
       - xarray-datatree==0.0.14
+      - dask==2026.1.1
+      - dask-image==2025.11.0
+      - fsspec==2026.3.0
+      - datashader==0.19.0
+      - tifffile==2026.4.11
       # single-cell / spatial analysis
       - anndata==0.12.11
       - scanpy==1.11.5
