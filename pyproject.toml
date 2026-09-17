@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "celltyping"
+name = "cellruler"
 version = "0.1.0"
 
 [tool.setuptools.packages.find]
