@@ -1,3 +1,6 @@
+'''
+Utility code for clustering approach.
+'''
 import scanpy as sc
 import pandas as pd
 
@@ -25,6 +28,7 @@ def leiden_and_rank(adata, scanpy_config=SCANPY_CFG):
     n_comps = min(scanpy_config["n_pcs"], adata_sc.n_obs - 1, adata_sc.n_vars - 1)
     sc.tl.pca(adata_sc, n_comps=n_comps, random_state=scanpy_config["seed"])
     sc.pp.neighbors(adata_sc, n_neighbors=scanpy_config["n_neighbors"])
+    print("Leiden...")
     sc.tl.leiden(
         adata_sc,
         resolution=scanpy_config["leiden_resolution"],
@@ -34,11 +38,12 @@ def leiden_and_rank(adata, scanpy_config=SCANPY_CFG):
     sc.tl.umap(adata_sc, random_state=scanpy_config["seed"])
     
     # Rank Genes Groups
+    print("Rank genes group")
     sc.tl.rank_genes_groups(adata_sc, groupby="leiden", method="wilcoxon", use_raw=False)
 
     # Add coord_x and coord_y cols
-    adata.obs["coord_x"] = adata.obsm["spatial"][:, 0]
-    adata.obs["coord_y"] = adata.obsm["spatial"][:, 1]
+    adata_sc.obs["coord_x"] = adata_sc.obsm["spatial"][:, 0]
+    adata_sc.obs["coord_y"] = adata_sc.obsm["spatial"][:, 1]
     
     return adata_sc
 
