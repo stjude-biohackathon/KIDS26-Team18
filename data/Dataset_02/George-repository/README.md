@@ -1,4 +1,5 @@
 # BioHackathon 2026 — Dataset_02 CosMx revised workflow
+Ref: https://github.com/JiahuaQu/BioHackathon-2026-Dataset_02_CosMx_revised/tree/master
 
 Reproducible analysis workflow for **GSM9046088 — Lung Adenocarcinoma TMA1 (NanoString/Bruker CosMx SMI)** from GEO series **GSE299786**. The project reconstructs both cell-level `AnnData` and molecule/segmentation-aware `SpatialData`, explores the whole TMA, focuses on the region labeled **FOV46**, compares two cell-typing strategies, and validates the annotations against the published/metadata reference annotation when available.
 
