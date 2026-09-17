@@ -1,0 +1,94 @@
+# Edit this file only — notebook cells read everything from here.
+# Swap candidate gene lists, QC cutoffs, or cluster labels without touching the notebook.
+
+qc:
+  min_nFeature: 30
+  min_nCount: 60
+
+spatial_crop:
+  enabled: true
+  x_min: 0
+  x_max: 25000
+  y_min: 0
+  y_max: 120000
+
+scanpy:
+  n_pcs: 30
+  n_neighbors: 15
+  leiden_resolution: 0.5
+  rank_genes_top_n: 20
+  seed: 42
+
+# Manual Leiden -> cell type map (approach i). Update after reviewing cluster marker tables.
+cluster_annotations:
+  "0": "SPP1+ stromal"
+  "1": "Epithelial"
+  "2": "Activated endothelial"
+  "3": "SPP1+ myeloid"
+  "4": "Fibroblast / stromal"
+  "5": "Epithelial"
+  "6": "Lymphoid"
+  "7": "Smooth muscle / pericyte"
+  "8": "Endothelial"
+
+# Panel curation sweep (approach ii — step 1).
+# Run curation cells in the notebook, then paste recommended markers below.
+curation:
+  max_k: 6
+  max_candidates: 10
+  count_threshold: 0
+  method: before_max_dropout
+  min_assigned_cells: 50
+
+# Rule-based panels (approach ii — step 2).
+# Input: `candidates` gene lists for curation.
+# Output: after curation, set fixed `markers` and optional per-panel `min_hits`.
+rule_panels:
+  Proximal tubule:
+    candidates:
+      - LRP2
+      - CUBN
+      - SLC34A1
+      - SLC5A2
+      - ALDOB
+      - SLC13A3
+      - SLC22A6
+      - SLC22A8
+      - PDZK1
+      - APOA1
+  Thick ascending limb:
+    candidates:
+      - UMOD
+      - SLC12A1
+      - KCNJ1
+      - CLDN16
+      - CLDN10
+      - CLDN14
+      - CASR
+      - PTH1R
+      - SLC9A3
+      - FXYD2
+  Endothelial:
+    candidates:
+      - PECAM1
+      - VWF
+      - EMCN
+      - KDR
+      - ENG
+      - CDH5
+      - ESAM
+      - RAMP2
+      - PLVAP
+      - EPAS1
+
+rule:
+  top_n_markers: 3
+  min_hits: 3
+  count_threshold: 0
+  ambiguous_label: Ambiguous
+  unassigned_label: Unassigned
+
+obs_keys:
+  leiden: leiden
+  cell_type_scanpy: cell_type_scanpy
+  cell_type_rule: cell_type_rule
