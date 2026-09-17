@@ -57,8 +57,20 @@ def get_topn_markers(adata, top_n=10):
     
     return pd.concat(marker_tables, ignore_index=True)
 
+def get_cluster_annotations(marker_dict):
+    '''
+    Currently this just prints an LLM prompt for assigning cell types to each cluster.
+    To be replaced by a standardized method (most likely).
+    '''
+    # Display LLM prompt for annotating clusters.
+    llm_prompt = "Paste the following prompt into your LLM of choice for updating the cluster annotations dictionary:\nCreate a python dictionary that defines the cell type for each given cluster based on the available markers. Do not label clusters as Doublets, Ambiguous, or Low quality unless explicitly instructed. Assign the most likely biological cell type based on dominant lineage markers. The markers are: " + str(marker_dict) +". Use the following format for the python dictionary so that it can be directly pasted into a Jupyter notebook: CLUSTER_ANNOTATIONS = {\n\"0\": \"Epithelial\",\n..."
+    
+    print(llm_prompt)
 
 def annotate_clusters(adata, cluster_defs):
+    '''
+    Update cluster cell types in anndata from given cluster definitions.
+    '''
     adata.obs["cell_type_scanpy"] = (
         adata.obs["leiden"]
         .astype(str)
@@ -68,3 +80,4 @@ def annotate_clusters(adata, cluster_defs):
 
     adata.obs["cell_type_scanpy"] = adata.obs["cell_type_scanpy"].astype("category")
     return adata
+
