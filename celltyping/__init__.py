@@ -1,10 +1,10 @@
 """Local analysis package for KIDS26-Team18."""
 
-from io import save_obs_to_parquet
-from load_data import attach_metadata, get_noncoding_genes, load_expression_matrix, read_adata, read_var_names
-from load_explore import find_repo_root, repo_root_from_raw_dir, setup_notebook_paths
-from plot import SpatialCoord_plot, custom_barplot, dotplot, plot_umap, set_scanpy_colors
-from spatial_plot import (
+from .celltype_io import save_obs_to_parquet
+from .load_data import attach_metadata, get_noncoding_genes, load_expression_matrix, read_adata, read_var_names
+from .load_explore import find_repo_root, repo_root_from_raw_dir, setup_notebook_paths
+from .plot import SpatialCoord_plot, custom_barplot, dotplot, plot_umap, set_scanpy_colors
+from .spatial_plot import (
     DATASHADER_AUTO_THRESHOLD,
     DEFAULT_POINTS_RENDER_METHOD,
     attach_morphology_mip,
