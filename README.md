@@ -1,5 +1,7 @@
 # KIDS26-Team18 — Cell Identity in Spatial OMICs
 
+![cellruler — rule-based cell typing](docs/cellruler_image.png)
+
 Exploring how **cluster-based** and **cell-based (rule-based)** annotation approaches compare across imaging-based spatial transcriptomics platforms (Xenium, CosMx).
 
 **Start here → [`data/README.md`](data/README.md)**
