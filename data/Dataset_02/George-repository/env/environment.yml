@@ -1,0 +1,52 @@
+# Reproduces the cluster `spatialdata` env used for Dataset_02–06 QC notebooks
+# and build_sdata.py scripts (Python 3.12, spatialdata 0.7.2, Zarr v3).
+#
+# Existing install on this machine:
+#   /mnt/scratch1/miniconda3/envs/spatialdata
+name: spatialdata
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      # spatialdata stack (Zarr v3)
+      - spatialdata==0.7.2
+      - spatialdata-plot==0.3.3
+      - spatialdata-io==0.6.0
+      - zarr==3.1.6
+      - ome-zarr==0.15.0
+      - ome-types==0.6.3
+      - multiscale-spatial-image==2.0.3
+      - spatial-image==1.2.3
+      - xarray==2026.4.0
+      - xarray-datatree==0.0.14
+      - dask==2026.1.1
+      - dask-image==2025.11.0
+      - fsspec==2026.3.0
+      - datashader==0.19.0
+      - tifffile==2026.4.11
+      # single-cell / spatial analysis
+      - anndata==0.12.11
+      - scanpy==1.11.5
+      - squidpy==1.8.1
+      - leidenalg==0.11.0
+      - igraph==1.0.0
+      - umap-learn==0.5.12
+      # numerics & IO
+      - numpy==2.4.4
+      - pandas==2.3.3
+      - scipy==1.17.1
+      - scikit-learn==1.8.0
+      - scikit-image==0.26.0
+      - h5py==3.16.0
+      - pyarrow==24.0.0
+      - geopandas==1.1.3
+      - shapely==2.1.2
+      # plotting
+      - matplotlib==3.10.9
+      - seaborn==0.13.2
+      # notebook
+      - jupyter
+      - ipykernel==6.31.0
+      - nbconvert

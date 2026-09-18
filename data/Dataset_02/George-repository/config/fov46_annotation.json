@@ -1,0 +1,11 @@
+{
+  "resolution": 0.6,
+  "cluster_annotations": {
+    "0": "Plasma_cell",
+    "1": "Macrophage",
+    "2": "Epithelial",
+    "3": "Fibroblast",
+    "4": "Endothelial",
+    "5": "Plasma_cell"
+  }
+}
