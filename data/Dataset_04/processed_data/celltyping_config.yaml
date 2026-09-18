@@ -41,49 +41,83 @@ curation:
   min_assigned_cells: 50
 
 # Rule-based panels (approach ii — step 2).
-# Input: `candidates` gene lists for curation.
-# Output: after curation, set fixed `markers` and optional per-panel `min_hits`.
+# Panel names match cluster_annotations / cell_type_scanpy (approach i).
+# Candidates are field-standard kidney markers — run §3a curation, then set markers + min_hits.
 rule_panels:
-  Proximal tubule:
+  Epithelial:
     candidates:
       - LRP2
-      - CUBN
       - SLC34A1
-      - SLC5A2
+      - CUBN
       - ALDOB
+      - EPCAM
+      - KRT8
+      - AQP1
       - SLC13A3
-      - SLC22A6
-      - SLC22A8
-      - PDZK1
-      - APOA1
-  Thick ascending limb:
-    candidates:
-      - UMOD
-      - SLC12A1
-      - KCNJ1
-      - CLDN16
-      - CLDN10
-      - CLDN14
-      - CASR
-      - PTH1R
-      - SLC9A3
-      - FXYD2
   Endothelial:
     candidates:
       - PECAM1
       - VWF
       - EMCN
-      - KDR
-      - ENG
       - CDH5
-      - ESAM
+      - KDR
       - RAMP2
+      - ENG
+  Activated endothelial:
+    candidates:
+      - ACKR1
+      - SELE
+      - ICAM1
+      - VCAM1
       - PLVAP
-      - EPAS1
+      - INSR
+      - ESM1
+  SPP1+ stromal:
+    candidates:
+      - SPP1
+      - COL1A1
+      - COL3A1
+      - FN1
+      - MMP2
+      - SPARC
+  Fibroblast / stromal:
+    candidates:
+      - COL1A1
+      - DCN
+      - LUM
+      - PDGFRA
+      - COL3A1
+      - FAP
+  SPP1+ myeloid:
+    candidates:
+      - SPP1
+      - CD68
+      - LST1
+      - TYROBP
+      - CSF1R
+      - C1QA
+      - APOE
+  Lymphoid:
+    candidates:
+      - CD3D
+      - TRAC
+      - CD247
+      - IL7R
+      - NKG7
+      - MS4A1
+      - CD79A
+  Smooth muscle / pericyte:
+    candidates:
+      - ACTA2
+      - MYH11
+      - TAGLN
+      - RGS5
+      - PDGFRB
+      - CNN1
 
 rule:
-  top_n_markers: 3
-  min_hits: 3
+  top_n_markers: 4
+  min_hits: 2
   count_threshold: 0
   ambiguous_label: Ambiguous
   unassigned_label: Unassigned
@@ -92,3 +126,11 @@ obs_keys:
   leiden: leiden
   cell_type_scanpy: cell_type_scanpy
   cell_type_rule: cell_type_rule
+
+# §4 — agreement between scanpy (i) and rule-based (ii); same label names.
+comparison:
+  mode: identity
+  scanpy_to_rule: {}
+  unassigned_rule_labels:
+    - Unassigned
+    - Ambiguous

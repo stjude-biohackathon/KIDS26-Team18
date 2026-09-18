@@ -407,3 +407,288 @@ def assign_rule_labels_from_panels(
         labels[i] = winners[0] if len(winners) == 1 else ambiguous_label
 
     return labels
+
+
+def unique_cluster_labels(cluster_annotations: dict[str, str]) -> list[str]:
+    """Unique cell type names from Leiden cluster_annotations."""
+    return sorted({str(v) for v in cluster_annotations.values()})
+
+
+def validate_rule_panels_align(
+    cluster_annotations: dict[str, str],
+    rule_panels: dict[str, Any],
+) -> list[str]:
+    """Return human-readable warnings when panel keys diverge from cluster labels."""
+    expected = set(unique_cluster_labels(cluster_annotations))
+    panel_keys = set(rule_panels.keys())
+    warnings: list[str] = []
+    missing = sorted(expected - panel_keys)
+    extra = sorted(panel_keys - expected)
+    if missing:
+        warnings.append(
+            f"rule_panels missing keys for cluster_annotations labels: {missing}"
+        )
+    if extra:
+        warnings.append(
+            f"rule_panels has keys not in cluster_annotations: {extra}"
+        )
+    return warnings
+
+
+def build_identity_scanpy_to_rule_map(
+    scanpy_labels: list[str] | set[str],
+    rule_panel_keys: list[str] | set[str],
+) -> dict[str, Any]:
+    """One-to-one map for labels present in both scanpy and rule panels."""
+    panel_keys = set(rule_panel_keys)
+    mapping: dict[str, Any] = {}
+    for label in sorted(set(scanpy_labels)):
+        if label == "Unassigned":
+            mapping[label] = None
+        elif label in panel_keys:
+            mapping[label] = label
+    return mapping
+
+
+def _normalize_expected_rule(value: Any) -> list[str] | None:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        return [str(v) for v in value]
+    raise TypeError(f"scanpy_to_rule values must be str, list, or null; got {type(value)}")
+
+
+def compare_rule_vs_scanpy(
+    adata: ad.AnnData,
+    comparison_cfg: dict[str, Any],
+    *,
+    scanpy_key: str,
+    rule_key: str,
+    comparison_obs_key: str = "rule_scanpy_comparison",
+    rule_cfg: dict[str, Any] | None = None,
+    rule_panel_keys: list[str] | None = None,
+) -> dict[str, Any]:
+    """Compare rule-based labels to scanpy using comparison.scanpy_to_rule mapping."""
+    scanpy = adata.obs[scanpy_key].astype(str)
+    rule = adata.obs[rule_key].astype(str)
+
+    mapping = dict(comparison_cfg.get("scanpy_to_rule") or {})
+    if comparison_cfg.get("mode") == "identity":
+        identity_map = build_identity_scanpy_to_rule_map(
+            scanpy.unique().tolist(),
+            rule_panel_keys or [],
+        )
+        for key, value in identity_map.items():
+            mapping.setdefault(key, value)
+
+    alignment_warnings: list[str] = []
+    if rule_panel_keys is not None:
+        unmapped_scanpy = sorted(
+            set(scanpy.unique()) - set(mapping.keys()) - {"Unassigned"}
+        )
+        if unmapped_scanpy:
+            alignment_warnings.append(
+                f"scanpy labels without identity mapping: {unmapped_scanpy}"
+            )
+
+    unassigned = list(comparison_cfg.get("unassigned_rule_labels") or [])
+    if rule_cfg and not unassigned:
+        unassigned = [
+            rule_cfg.get("unassigned_label", "Unassigned"),
+            rule_cfg.get("ambiguous_label", "Ambiguous"),
+        ]
+    unassigned_set = set(unassigned)
+
+    strict_match = scanpy == rule
+    n_strict_match = int(strict_match.sum())
+    n_cells = int(adata.n_obs)
+    pct_strict_match = round(100 * n_strict_match / n_cells, 2) if n_cells else 0.0
+
+    statuses = np.empty(adata.n_obs, dtype=object)
+
+    for i in range(adata.n_obs):
+        s_label = scanpy.iat[i]
+        r_label = rule.iat[i]
+        expected = mapping.get(s_label)
+        if s_label not in mapping:
+            statuses[i] = "unmapped_scanpy"
+            continue
+        expected_list = _normalize_expected_rule(expected)
+        rule_is_unassigned = r_label in unassigned_set
+        if expected_list is None:
+            statuses[i] = "recapitulate" if rule_is_unassigned else "rule_changes"
+        elif rule_is_unassigned:
+            statuses[i] = "rule_abstains"
+        elif r_label in expected_list:
+            statuses[i] = "recapitulate"
+        else:
+            statuses[i] = "rule_changes"
+
+    adata.obs[comparison_obs_key] = pd.Categorical(statuses)
+
+    status_counts = pd.Series(statuses).value_counts()
+    n_recapitulate = int(status_counts.get("recapitulate", 0))
+    n_rule_changes = int(status_counts.get("rule_changes", 0))
+    n_rule_abstains = int(status_counts.get("rule_abstains", 0))
+    n_unmapped = int(status_counts.get("unmapped_scanpy", 0))
+
+    rule_called_mask = ~rule.isin(unassigned_set)
+    n_rule_called = int(rule_called_mask.sum())
+    if n_rule_called:
+        recapitulate_mask = (adata.obs[comparison_obs_key] == "recapitulate").values
+        called_recapitulate = int((recapitulate_mask & rule_called_mask.values).sum())
+    else:
+        called_recapitulate = 0
+
+    by_scanpy = (
+        adata.obs.groupby(scanpy_key, observed=True)[comparison_obs_key]
+        .value_counts()
+        .unstack(fill_value=0)
+    )
+    by_scanpy_pct = by_scanpy.div(by_scanpy.sum(axis=1), axis=0).round(3)
+
+    unmapped_scanpy_labels = sorted(set(scanpy) - set(mapping.keys()))
+
+    return {
+        "n_cells": n_cells,
+        "n_strict_match": n_strict_match,
+        "pct_strict_match": pct_strict_match,
+        "n_recapitulate": n_recapitulate,
+        "n_rule_changes": n_rule_changes,
+        "n_rule_abstains": n_rule_abstains,
+        "n_unmapped_scanpy": n_unmapped,
+        "alignment_warnings": alignment_warnings,
+        "scanpy_to_rule_mapping": mapping,
+        "pct_recapitulate": round(100 * n_recapitulate / n_cells, 2) if n_cells else 0.0,
+        "pct_rule_changes": round(100 * n_rule_changes / n_cells, 2) if n_cells else 0.0,
+        "pct_rule_abstains": round(100 * n_rule_abstains / n_cells, 2) if n_cells else 0.0,
+        "n_rule_called": n_rule_called,
+        "pct_recapitulate_given_rule_called": (
+            round(100 * called_recapitulate / n_rule_called, 2) if n_rule_called else 0.0
+        ),
+        "by_scanpy_counts": by_scanpy,
+        "by_scanpy_fraction": by_scanpy_pct,
+        "unmapped_scanpy_labels": unmapped_scanpy_labels,
+        "comparison_obs_key": comparison_obs_key,
+    }
+
+def celltype_fdr(
+    cell_metadata: pd.DataFrame,
+    truth_col: str,
+    pred_col: str,
+    *,
+    exclude_pred: set[str] | None = None,
+) -> pd.DataFrame:
+    """Per predicted label: TP/FP vs a reference column (FDR = FP / (TP+FP), precision = 1 - FDR)."""
+    exclude_pred = exclude_pred or set()
+    results: list[dict[str, Any]] = []
+
+    pred_labels = cell_metadata[pred_col].astype(str)
+    truth = cell_metadata[truth_col].astype(str)
+
+    for cell_type in sorted(pred_labels.dropna().unique()):
+        if cell_type in exclude_pred:
+            continue
+        truth_pos = truth == cell_type
+        pred_pos = pred_labels == cell_type
+        tp = int((truth_pos & pred_pos).sum())
+        fp = int((~truth_pos & pred_pos).sum())
+        n_predicted = tp + fp
+        fdr = fp / n_predicted if n_predicted > 0 else float("nan")
+        results.append(
+            {
+                "cell_type": cell_type,
+                "TP": tp,
+                "FP": fp,
+                "n_predicted": n_predicted,
+                "FDR": fdr,
+                "precision": 1 - fdr if n_predicted > 0 else float("nan"),
+            }
+        )
+
+    return (
+        pd.DataFrame(results)
+        .sort_values("FDR", na_position="last")
+        .reset_index(drop=True)
+    )
+
+
+def _micro_precision(fdr_df: pd.DataFrame) -> float:
+    if fdr_df.empty:
+        return float("nan")
+    tp = fdr_df["TP"].sum()
+    n_pred = fdr_df["n_predicted"].sum()
+    return float(tp / n_pred) if n_pred else float("nan")
+
+
+def compare_fdr_rule_vs_scanpy(
+    cell_metadata: pd.DataFrame,
+    scanpy_key: str,
+    rule_key: str,
+    *,
+    unassigned_labels: list[str] | None = None,
+) -> dict[str, Any]:
+    """Symmetric FDR tables: rule vs scanpy (reference) and scanpy vs rule (reference)."""
+    unassigned = set(unassigned_labels or [])
+    fdr_rule = celltype_fdr(
+        cell_metadata,
+        truth_col=scanpy_key,
+        pred_col=rule_key,
+        exclude_pred=unassigned,
+    )
+    fdr_scanpy = celltype_fdr(
+        cell_metadata,
+        truth_col=rule_key,
+        pred_col=scanpy_key,
+        exclude_pred=unassigned,
+    )
+    return {
+        "fdr_rule_vs_scanpy": fdr_rule,
+        "fdr_scanpy_vs_rule": fdr_scanpy,
+        "rule_micro_precision": _micro_precision(fdr_rule),
+        "scanpy_micro_precision": _micro_precision(fdr_scanpy),
+        "rule_macro_precision": float(fdr_rule["precision"].mean()) if len(fdr_rule) else float("nan"),
+        "scanpy_macro_precision": float(fdr_scanpy["precision"].mean()) if len(fdr_scanpy) else float("nan"),
+    }
+
+
+def plot_fdr_rule_vs_scanpy(
+    fdr_cmp: dict[str, Any],
+    *,
+    ax=None,
+    figsize: tuple[float, float] = (10, 5),
+):
+    """Grouped bar: per-type precision for rule (ref=scanpy) vs scanpy (ref=rule)."""
+    import matplotlib.pyplot as plt
+
+    rule_df = fdr_cmp["fdr_rule_vs_scanpy"].rename(
+        columns={"precision": "rule_precision", "FDR": "rule_FDR"}
+    )
+    scanpy_df = fdr_cmp["fdr_scanpy_vs_rule"].rename(
+        columns={"precision": "scanpy_precision", "FDR": "scanpy_FDR"}
+    )
+    merged = pd.merge(
+        rule_df[["cell_type", "rule_precision", "rule_FDR", "n_predicted"]],
+        scanpy_df[["cell_type", "scanpy_precision", "scanpy_FDR"]],
+        on="cell_type",
+        how="outer",
+    ).sort_values("rule_precision", ascending=True, na_position="first")
+
+    if ax is None:
+        _, ax = plt.subplots(figsize=figsize)
+
+    y = np.arange(len(merged))
+    height = 0.35
+    ax.barh(y - height / 2, merged["rule_precision"], height, label="Rule (ref: scanpy)", color="#2a9d8f")
+    ax.barh(y + height / 2, merged["scanpy_precision"], height, label="Scanpy (ref: rule)", color="#e76f51")
+    ax.set_yticks(y)
+    ax.set_yticklabels(merged["cell_type"])
+    ax.set_xlim(0, 1.05)
+    ax.set_xlabel("Precision (1 − FDR)")
+    ax.set_title("Per-type precision: rule-based vs scanpy (cross-referenced)")
+    ax.legend(loc="lower right")
+    ax.axvline(0.5, color="gray", linestyle=":", linewidth=0.8)
+    plt.tight_layout()
+    return ax, merged

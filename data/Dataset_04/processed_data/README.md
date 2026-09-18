@@ -19,16 +19,35 @@ Source: [GSE282026](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282026
 | --- | --- | --- |
 | **Method** | Leiden clustering + manual cluster labels | Marker panels + count thresholds |
 | **Config** | `cluster_annotations` | `rule_panels`, `rule`, `curation` |
-| **Output column** | `cell_type_scanpy` | `cell_type_rule` |
-| **Best for** | Exploratory discovery, unknown populations | Known lineages with curated marker sets |
+| **Output column** | `cell_type_scanpy` | `cell_type_rule` (same label names) |
+| **Best for** | Exploratory discovery, unknown populations | Canonical kidney marker panels per lineage |
 
 Both approaches write to the same `adata` object so you can compare them in §4 of the notebook.
+
+### Rule panels (aligned with scanpy)
+
+`rule_panels` keys match `cluster_annotations` values. Candidates are field-standard kidney / stromal / immune / vascular markers (curate in §3a per panel).
+
+| Panel | Biology (summary) | Example candidates |
+| --- | --- | --- |
+| Epithelial | Kidney tubule epithelium | LRP2, SLC34A1, CUBN, EPCAM |
+| Endothelial | Vascular EC | PECAM1, VWF, EMCN |
+| Activated endothelial | Activated / inflamed EC | ACKR1, SELE, PLVAP |
+| SPP1+ stromal | SPP1-high stromal | SPP1, COL1A1, FN1 |
+| Fibroblast / stromal | Matrix fibroblast | DCN, LUM, PDGFRA |
+| SPP1+ myeloid | Macrophage / myeloid | CD68, LST1, TYROBP |
+| Lymphoid | T / NK / B | CD3D, TRAC, IL7R |
+| Smooth muscle / pericyte | SMC / pericyte | ACTA2, TAGLN, RGS5 |
+
+### §4 — scanpy vs rule (identity)
+
+With `comparison.mode: identity`, each scanpy label maps to the **same** rule panel name. `compare_rule_vs_scanpy()` reports **strict match** (`cell_type_scanpy == cell_type_rule`) and statuses on `rule_scanpy_comparison`: `recapitulate`, `rule_changes`, `rule_abstains`, `unmapped_scanpy`. Override mapping via `comparison.scanpy_to_rule` if needed.
 
 ---
 
 ## Approach ii — rule-based typing (detailed)
 
-Rule-based typing assigns each cell a label when it expresses enough markers from a **panel** (e.g. Proximal tubule, Endothelial). Everything is driven by `celltyping_config.yaml` — you should not need to edit Python code to swap gene sets or thresholds.
+Rule-based typing assigns each cell a label when it expresses enough markers from a **panel** named like the scanpy cell types (e.g. Epithelial, Endothelial). Everything is driven by `celltyping_config.yaml` — you should not need to edit Python code to swap gene sets or thresholds.
 
 ### Concepts
 
@@ -41,9 +60,9 @@ Rule-based typing assigns each cell a label when it expresses enough markers fro
 **Assignment** — for each cell, count hits per panel. The panel with the most hits wins **if** hits ≥ that panel's `min_hits`. Ties → `Ambiguous`. No panel qualifies → `Unassigned`.
 
 ```text
-cell counts:  ALDOB=2  LRP2=0  PECAM1=3  ENG=1
-Proximal tubule panel [ALDOB, SLC13A3, APOA1, LRP2]  →  1 hit
-Endothelial panel     [ENG, PECAM1, EPAS1, ESAM]      →  2 hits  ← wins (if min_hits ≤ 2)
+cell counts:  ALDOB=2  LRP2=1  PECAM1=3  ENG=1
+Epithelial panel  [ALDOB, LRP2, SLC34A1, EPCAM]  →  2 hits
+Endothelial panel [ENG, PECAM1, VWF, EMCN]       →  2 hits  ← tie → Ambiguous (or winner if one panel leads)
 ```
 
 ### Two-step workflow
@@ -75,11 +94,11 @@ Paste curated panels into `rule_panels` as fixed `markers` + per-panel `min_hits
 ```yaml
 rule_panels:
   Endothelial:
-    markers: [EPAS1]
+    markers: [PECAM1, VWF]
     min_hits: 1
-  Proximal tubule:
-    markers: [ALDOB]
-    min_hits: 1
+  Epithelial:
+    markers: [LRP2, SLC34A1]
+    min_hits: 2
 ```
 
 Re-run the config cell and assignment cells. Labels land in `adata.obs["cell_type_rule"]`.
@@ -110,6 +129,8 @@ If `markers` is omitted, the notebook falls back to auto-selecting the top `rule
 | `recommend_panel_markers()` | Pick k* before max dropout |
 | `resolve_panel_markers()` | Resolve markers + per-panel min_hits from config |
 | `assign_rule_labels_from_panels()` | Apply multi-panel rules to all cells |
+| `validate_rule_panels_align()` | Warn if `rule_panels` keys differ from `cluster_annotations` |
+| `compare_rule_vs_scanpy()` | Identity/mapped agreement, strict match %, `rule_scanpy_comparison` |
 | `format_curated_yaml_snippet()` | Print YAML to paste into config |
 
 ### Practical tips
