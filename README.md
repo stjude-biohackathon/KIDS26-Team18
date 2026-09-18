@@ -9,4 +9,5 @@ That file has everything you need: dataset catalog, BOX download link (when read
 **Team lead:** Maycon Marção ([@Mmaycon](https://github.com/Mmaycon))
 
 
+**CellRuler:** CellRuler: A Rule-Based Method for Cell-Type Annotation in Image-Based Spatial OMICs
 ![cellruler — rule-based cell typing](docs/cellruler_image.png)
