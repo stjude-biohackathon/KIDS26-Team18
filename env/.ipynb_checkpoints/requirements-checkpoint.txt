@@ -1,6 +1,8 @@
 # Pip requirements mirrored from environment.yml (spatialdata env, Python 3.12)
 # Used by Dataset_02–06 QC notebooks and build_sdata.py scripts.
 spatialdata==0.7.3
+streamlit>=1.64
+plotly>=7.1
 spatialdata-plot==0.3.3
 spatialdata-io==0.6.0
 zarr==3.1.6
