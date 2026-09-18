@@ -1,4 +1,4 @@
- '''
+'''
 Utility code for rule-based approach.
 '''
 import pandas as pd

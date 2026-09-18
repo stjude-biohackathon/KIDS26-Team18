@@ -51,7 +51,8 @@ def get_topn_markers(adata, top_n=10):
     '''
     Return top n markers from culstered anndata.
     '''
-    clusters = sorted(adata.obs["leiden"].unique(), key=lambda x: int(x))
+    leiden_series = adata.obs["leiden"].dropna()
+    clusters = sorted(leiden_series.unique(), key=lambda x: int(x))
 
     marker_tables = []
     for cluster in clusters:
