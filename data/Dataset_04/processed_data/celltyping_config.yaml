@@ -1,0 +1,136 @@
+# Edit this file only — notebook cells read everything from here.
+# Swap candidate gene lists, QC cutoffs, or cluster labels without touching the notebook.
+
+qc:
+  min_nFeature: 30
+  min_nCount: 60
+
+spatial_crop:
+  enabled: true
+  x_min: 0
+  x_max: 25000
+  y_min: 0
+  y_max: 120000
+
+scanpy:
+  n_pcs: 30
+  n_neighbors: 15
+  leiden_resolution: 0.5
+  rank_genes_top_n: 20
+  seed: 42
+
+# Manual Leiden -> cell type map (approach i). Update after reviewing cluster marker tables.
+cluster_annotations:
+  "0": "SPP1+ stromal"
+  "1": "Epithelial"
+  "2": "Activated endothelial"
+  "3": "SPP1+ myeloid"
+  "4": "Fibroblast / stromal"
+  "5": "Epithelial"
+  "6": "Lymphoid"
+  "7": "Smooth muscle / pericyte"
+  "8": "Endothelial"
+
+# Panel curation sweep (approach ii — step 1).
+# Run curation cells in the notebook, then paste recommended markers below.
+curation:
+  max_k: 6
+  max_candidates: 10
+  count_threshold: 0
+  method: before_max_dropout
+  min_assigned_cells: 50
+
+# Rule-based panels (approach ii — step 2).
+# Panel names match cluster_annotations / cell_type_scanpy (approach i).
+# Candidates are field-standard kidney markers — run §3a curation, then set markers + min_hits.
+rule_panels:
+  Epithelial:
+    candidates:
+      - LRP2
+      - SLC34A1
+      - CUBN
+      - ALDOB
+      - EPCAM
+      - KRT8
+      - AQP1
+      - SLC13A3
+  Endothelial:
+    candidates:
+      - PECAM1
+      - VWF
+      - EMCN
+      - CDH5
+      - KDR
+      - RAMP2
+      - ENG
+  Activated endothelial:
+    candidates:
+      - ACKR1
+      - SELE
+      - ICAM1
+      - VCAM1
+      - PLVAP
+      - INSR
+      - ESM1
+  SPP1+ stromal:
+    candidates:
+      - SPP1
+      - COL1A1
+      - COL3A1
+      - FN1
+      - MMP2
+      - SPARC
+  Fibroblast / stromal:
+    candidates:
+      - COL1A1
+      - DCN
+      - LUM
+      - PDGFRA
+      - COL3A1
+      - FAP
+  SPP1+ myeloid:
+    candidates:
+      - SPP1
+      - CD68
+      - LST1
+      - TYROBP
+      - CSF1R
+      - C1QA
+      - APOE
+  Lymphoid:
+    candidates:
+      - CD3D
+      - TRAC
+      - CD247
+      - IL7R
+      - NKG7
+      - MS4A1
+      - CD79A
+  Smooth muscle / pericyte:
+    candidates:
+      - ACTA2
+      - MYH11
+      - TAGLN
+      - RGS5
+      - PDGFRB
+      - CNN1
+
+rule:
+  top_n_markers: 4
+  min_hits: 2
+  count_threshold: 0
+  ambiguous_label: Ambiguous
+  unassigned_label: Unassigned
+
+obs_keys:
+  leiden: leiden
+  cell_type_scanpy: cell_type_scanpy
+  cell_type_rule: cell_type_rule
+
+# §4 — agreement between scanpy (i) and rule-based (ii); same label names.
+comparison:
+  mode: identity
+  scanpy_to_rule: {}
+  unassigned_rule_labels:
+    - Unassigned
+    - Ambiguous
