@@ -21,7 +21,8 @@
 *.h5ad
 *.h5
 *.parquet
-*.zarr
+**/*.zarr/
+*.zarr.tar.gz
 
 # Python template exclusions
 
@@ -54,7 +55,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-*.egg-info
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
