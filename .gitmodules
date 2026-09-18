@@ -1,0 +1,3 @@
+[submodule "cell-typing"]
+	path = cell-typing
+	url = git@github.com:ximbao/cell-typing.git
